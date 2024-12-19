@@ -1,7 +1,7 @@
 /* 2023-06-09T11:22:25Z */
 
 /* ----------------------------------------------------------------------
-Copyright (c) 2022-2023 Neuton.AI, Inc.
+Copyright (c) 2022-2025 Neuton.AI, Inc.
 *
 The source code and its binary form are being made available on the following terms:
 Redistribution, use, and modification are permitted provided that the following

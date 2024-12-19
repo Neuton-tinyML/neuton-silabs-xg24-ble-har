@@ -441,7 +441,7 @@
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 	<storageModule moduleId="refreshScope" versionNumber="2">
 		<configuration configurationName="GNU ARM v10.3.1 - Default">
-			<resource resourceType="PROJECT" workspacePath="/neuton-silabs-xg24-ble-remotectrl"/>
+			<resource resourceType="PROJECT" workspacePath="/neuton-silabs-xg24-ble-har"/>
 		</configuration>
 	</storageModule>
 	<storageModule moduleId="scannerConfiguration">

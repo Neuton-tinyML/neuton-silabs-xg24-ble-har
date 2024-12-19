@@ -1,12 +1,11 @@
 // ///////////////////////// Package Header Files ////////////////////////////
-#include "neuton_remotectrl_app.h"
-#include "neuton_result_postprocessing.h"
-// ////////////////////// Package Group Header Files /////////////////////////
 #include <neuton/neuton.h>
 // /////////////////// Application Global Header Files ///////////////////////
 #include <drivers/icm20689_utils.h>
 #include <app_log.h>
 #include <bluetooth/bluetooth.h>
+#include <neuton_har_app/neuton_har_app.h>
+#include <neuton_har_app/neuton_result_postprocessing.h>
 #include <sl_simple_led_instances.h>
 #include <sl_simple_button_instances.h>
 // /////////////////// 3rd Party Software Header Files ///////////////////////
@@ -61,7 +60,6 @@ static void led_indication_(void);
 
 /** ICM20689 sensor data ready flag */
 static volatile bool icm20689_data_ready_ = false;
-static volatile bool data_recording_ = false;
 
 /** ICM20689 sensor operating configuration */
 static icm20689_config_t icm20689_config_ = 
@@ -86,9 +84,6 @@ static struct
     bool reset_send_request;
 } bt_key_ctx_ = {0};
 
-/** Current keyboard control mode */
-static neuton_remotectrl_mode_t keyboard_ctrl_mode_ = NEUTON_REMOTECTRL_MODE_PRESENTATION;
-
 /** Current active led color indication*/
 static const sl_led_t* p_active_led_ = NULL;
 
@@ -97,9 +92,9 @@ static led_state_t next_led_state_ = LED_STATE_BLE_ADVERTISING_LED_OFF;
 
 //////////////////////////////////////////////////////////////////////////////
 
-void neuton_remotectrl_app_init(void)
+void neuton_har_app_init(void)
 {
-    app_log_info("Neuton.AI Gesture Recognition Demo for Remote Control Device\r\n");
+    app_log_info("Neuton.AI Human Activity Recognition Demo\r\n");
 
     /** Setup power manager */
     sl_power_manager_add_em_requirement(SL_POWER_MANAGER_EM1);
@@ -125,21 +120,7 @@ void neuton_remotectrl_app_init(void)
 //////////////////////////////////////////////////////////////////////////////
 ///
 
-static const char* LABEL_VS_NAME[] =
-{
-    [NEUTON_LABEL_IDLE]           = "IDLE",
-    [NEUTON_LABEL_UNKNOWN]        = "UNKNOWN",
-    [NEUTON_LABEL_SCREWDRIVER]    = "SCREWDRIVER",
-    [NEUTON_LABEL_BRUSHING_HAIR]  = "BRUSHING HAIR",
-    [NEUTON_LABEL_WAVING]         = "HAND WAVING",
-    [NEUTON_LABEL_WASHING_HANDS]  = "WASHING HANDS",
-    [NEUTON_LABEL_CLAPPING]       = "CLAPPING",
-    [NEUTON_LABEL_WIPING]         = "WIPING"
-};
-
-static neuton_u16_t raw_prediction_ = NEUTON_LABEL_UNKNOWN;
-
-void neuton_remotectrl_app_dowork(void)
+void neuton_har_app_dowork(void)
 {
     /** Handle LED indication */
     led_indication_();
@@ -174,12 +155,6 @@ void neuton_remotectrl_app_dowork(void)
     err = icm20689_read_raw_gyro(input_data + ACCEL_AXIS_NUM);
     EFM_ASSERT((err == SL_STATUS_OK));
 
-//    if (data_recording_)
-//      {
-//        app_log("%d,%d,%d,%d,%d,%d", input_data[0], input_data[1], input_data[2],input_data[3], input_data[4], input_data[5]);
-//      }
-
-
     /** Feeding real-time sensor data point to Neuton library to collect data window */
     neuton_input_features_t* p_input = neuton_nn_feed_inputs(input_data, NEUTON_INPUT_DATA_LEN);
 
@@ -196,20 +171,13 @@ void neuton_remotectrl_app_dowork(void)
         /** Handle Neuton inference results if the prediction was successful */
         if (targets_num > 0)
         {
-            raw_prediction_ = predicted_target;
             neuton_result_postprocess(predicted_target, (float)(p_probabilities[predicted_target]) / 65535,
                                         neuton_prediction_subscriber_);
-//           app_log("Prediction %s, prob %0.3f", LABEL_VS_NAME[predicted_target], ((float)p_probabilities[predicted_target]));
         }
     }
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
-void neuton_remotectrl_app_set_mode(const neuton_remotectrl_mode_t mode)
-{
-    keyboard_ctrl_mode_ = mode;
-}
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -382,24 +350,10 @@ void sl_button_on_change(const sl_button_t* p_handle)
 {
     if (p_handle->get_state(p_handle) == BUTTON_PRESSED_STATE)
     {
-        data_recording_ = data_recording_ ? false : true;
-
         /** Change LED indication state */
         sl_led_turn_off(p_active_led_);
         next_led_state_ = sl_bt_is_connected() ?
                             LED_STATE_BLE_CONNECTED_LED_OFF :
                             LED_STATE_BLE_ADVERTISING_LED_OFF;
-
-        /** Change Keyboard control mode and led indication color by user button click */
-        if (keyboard_ctrl_mode_ == NEUTON_REMOTECTRL_MODE_PRESENTATION)
-        {
-            keyboard_ctrl_mode_ = NEUTON_REMOTECTRL_MODE_MUSIC;
-            p_active_led_ = sl_simple_led_array[LED_INSTANCE_ID_GREEN];
-        }
-        else
-        {
-            keyboard_ctrl_mode_ = NEUTON_REMOTECTRL_MODE_PRESENTATION;
-            p_active_led_ = sl_simple_led_array[LED_INSTANCE_ID_RED];
-        }
     }
 }

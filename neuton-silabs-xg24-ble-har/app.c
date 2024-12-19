@@ -14,15 +14,15 @@
  * sections of the MSLA applicable to Source Code.
  *
  ******************************************************************************/
+#include <neuton_har_app/neuton_har_app.h>
 #include "app.h"
-#include "neuton_remotectrl_app/neuton_remotectrl_app.h"
 
 /***************************************************************************//**
  * Initialize application.
  ******************************************************************************/
 void app_init(void)
 {
-  neuton_remotectrl_app_init();
+  neuton_har_app_init();
 }
 
 /***************************************************************************//**
@@ -30,5 +30,5 @@ void app_init(void)
  ******************************************************************************/
 void app_process_action(void)
 {
-  neuton_remotectrl_app_dowork();
+  neuton_har_app_dowork();
 }
