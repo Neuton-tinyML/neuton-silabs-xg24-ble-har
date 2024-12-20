@@ -8,6 +8,9 @@ import matplotlib.font_manager as fm
 from PIL import Image
 import serial
 from serial import Serial
+import asyncio
+from bleak import BleakScanner, BleakClient
+from threading import Thread
 
 PORT = "/dev/cu.usbmodem0004402992621"
 
@@ -22,14 +25,16 @@ target_codes = {
     "7": "idle",
 }
 
-ser = Serial(
-    port=PORT,
-    baudrate=115200,
-    parity=serial.PARITY_NONE,
-    stopbits=serial.STOPBITS_ONE,
-    bytesize=serial.EIGHTBITS,
-    timeout=0,
-)
+# ser = Serial(
+#     port=PORT,
+#     baudrate=115200,
+#     parity=serial.PARITY_NONE,
+#     stopbits=serial.STOPBITS_ONE,
+#     bytesize=serial.EIGHTBITS,
+#     timeout=0,
+# )
+
+ble_str = ""
 
 
 def handle_serial():
@@ -39,6 +44,60 @@ def handle_serial():
     probability = serial_str.split(",")[1]
     probability = probability.strip()
     return predicted_class, probability
+
+def handle_ble():
+    global ble_str
+    predicted_class = str(ble_str.split(",")[0])
+    probability = ble_str.split(",")[1]
+    probability = probability.strip()
+    return predicted_class, probability
+
+async def discover_services(device_name, characteristic_uuid):
+    scanner = BleakScanner()
+
+    # Scan for devices
+    devices = await scanner.discover()
+    for device in devices:
+        if device.name == device_name:
+            print("{0} device found".format(device_name))
+            async with BleakClient(device) as client:
+                await client.is_connected()
+                print("Device Connected!")
+
+                services = await client.get_services()
+
+                for service in services:
+                    for char in service.characteristics:
+                        if char.uuid == characteristic_uuid:
+                            print("Neuton characteristic found")
+                            print("Ready to work")
+                            await start_listening(client, char)
+                            return
+                        
+
+async def start_listening(client, characteristic):
+    def notification_handler(sender: int, data: bytearray):
+        # This function will be called when notifications/indications are received
+        # The received data will be available in the 'data' parameter.
+        # print(f"{data.decode('utf-8')}")
+
+        global ble_str
+
+        ble_str = data.decode('utf-8').strip()
+
+        print(ble_str)
+        
+
+
+    # Subscribe to notifications/indications for the characteristic
+    await client.start_notify(characteristic.uuid, notification_handler)
+
+    # Keep the program running to continue listening for data
+    while True:
+        await asyncio.sleep(5)
+
+def thread_ble():
+    asyncio.run(discover_services("Neuton-ble-ctrl", "5b026510-4088-c297-46d8-be6c736a087a"))
 
 
 class HarAnimation:
@@ -101,7 +160,7 @@ class HarAnimation:
             alpha=0.05,
         )
         ax.add_patch(rect)
-
+    
     def main(self):
         """
         Displays a live animation of the predicted classes.
@@ -110,6 +169,11 @@ class HarAnimation:
             None
 
         """
+
+        x = Thread(target=thread_ble)
+        x.start()
+
+
         fig, ax = plt.subplots(1, figsize=(10, 7))
         ax.axis("off")
 
@@ -117,7 +181,8 @@ class HarAnimation:
 
         def animate_teeth(i):
             try:
-                predicted_class, probability = handle_serial()
+                # predicted_class, probability = handle_serial()
+                predicted_class, probability = handle_ble()
                 activity = target_codes[predicted_class]
                 ax.clear()
                 self.add_text(

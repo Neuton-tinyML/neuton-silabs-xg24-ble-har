@@ -27,7 +27,7 @@ extern uint8_t current_modifier_key;
 #ifdef __cplusplus
 extern "C" {
 #endif
-void sl_bt_reset_report(void);
+bool sl_bt_send_remote_ctrl_data(const char* data);
 bool sl_bt_is_connected(void);
 #ifdef __cplusplus
 }
