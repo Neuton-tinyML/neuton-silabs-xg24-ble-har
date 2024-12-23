@@ -16,9 +16,6 @@
 //////////////////////////////////////////////////////////////////////////////
 
 
-#define BLE_SEND_KEY_RESET_TIMEOUT_MS               (20U)
-#define BLE_HOLD_KEY_RESET_TIMEOUT_MS               (550U)
-#define BLE_AFTER_HOLD_KEY_RESET_TIMEOUT_MS         (180U)
 #define BLE_ADVERTISING_LED_TOGGLE_PERIOD_MS        (500U)
 #define BLE_CONNECTED_LED_TOGGLE_PERIOD_MS          (100U)
 #define PREDICTION_TIMEOUT_MS                       (800U)
@@ -31,6 +28,8 @@
 #define GYRO_AXIS_NUM                               (3U)
 #define NEUTON_INPUT_DATA_LEN                       (ACCEL_AXIS_NUM + GYRO_AXIS_NUM)
 #define BUTTON_PRESSED_STATE                        (1U)
+
+#define DEQUANTIZE_PROBABILITY(q_prob)              (((float)(q_prob) / 65535))
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -148,7 +147,7 @@ void neuton_har_app_dowork(void)
         /** Handle Neuton inference results if the prediction was successful */
         if (targets_num > 0)
         {
-            neuton_result_postprocess(predicted_target, (float)(p_probabilities[predicted_target]) / 65535,
+            neuton_result_postprocess(predicted_target, DEQUANTIZE_PROBABILITY(p_probabilities[predicted_target]),
                                         neuton_prediction_subscriber_);
         }
     }
@@ -169,17 +168,13 @@ static void neuton_prediction_subscriber_(const neuton_class_label_t class_label
                                         const float probability,
                                         const char* class_name)
 {
-//     app_log("Predicted %s, with probability %0.3f\r", class_name, probability);
+   app_log("Predicted %s, with probability %0.3f\r", class_name, probability);
 
-
-    static char send_buff[40] = {0};
+    static char send_buff[20] = {0};
     memset(send_buff, 0, sizeof(send_buff));
 
     snprintf(send_buff, sizeof(send_buff), "%d, %d", (int)class_label, (int)(probability * 100));
-
-    app_log("%s", send_buff);
-
-    sl_bt_send_remote_ctrl_data(send_buff);
+    sl_bt_send_data_str(send_buff);
 }
 
 //////////////////////////////////////////////////////////////////////////////

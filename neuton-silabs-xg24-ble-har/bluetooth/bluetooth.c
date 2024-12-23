@@ -34,9 +34,6 @@
 
 static uint8_t notification_enabled = 0;
 static uint8_t connection_handle = 0xff;
-uint8_t current_report_page = 0; // 0x01 is for vanilla keyboard report, 0x02 is for media keys
-uint8_t current_key = 0;
-uint8_t current_modifier_key = 0;
 
 // The advertising set handle allocated from Bluetooth stack.
 static uint8_t advertising_set_handle = 0xff;
@@ -137,7 +134,7 @@ bool sl_bt_is_connected(void)
   return (connection_handle != 0xff) ? true : false;
 }
 
-bool sl_bt_send_remote_ctrl_data(const char* data)
+bool sl_bt_send_data_str(const char* data)
 {
   if (!sl_bt_is_connected())
     {
