@@ -11,13 +11,11 @@
 // /////////////////// 3rd Party Software Header Files ///////////////////////
 // ////////////////////// Standard C++ Header Files //////////////////////////
 // /////////////////////// Standard C Header Files ///////////////////////////
-
+#include <string.h>
+#include <stdio.h>
 //////////////////////////////////////////////////////////////////////////////
 
 
-#define BLE_SEND_KEY_RESET_TIMEOUT_MS               (20U)
-#define BLE_HOLD_KEY_RESET_TIMEOUT_MS               (550U)
-#define BLE_AFTER_HOLD_KEY_RESET_TIMEOUT_MS         (180U)
 #define BLE_ADVERTISING_LED_TOGGLE_PERIOD_MS        (500U)
 #define BLE_CONNECTED_LED_TOGGLE_PERIOD_MS          (100U)
 #define PREDICTION_TIMEOUT_MS                       (800U)
@@ -30,6 +28,8 @@
 #define GYRO_AXIS_NUM                               (3U)
 #define NEUTON_INPUT_DATA_LEN                       (ACCEL_AXIS_NUM + GYRO_AXIS_NUM)
 #define BUTTON_PRESSED_STATE                        (1U)
+
+#define DEQUANTIZE_PROBABILITY(q_prob)              (((float)(q_prob) / 65535))
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -53,7 +53,6 @@ static void icm20689_data_rdy_cb_(void);
 static void neuton_prediction_subscriber_(const neuton_class_label_t class_label, 
                                         const float probability,
                                         const char* class_name);
-static void send_bt_keyboard_key_(const neuton_class_label_t class_label);
 static void led_indication_(void);
 
 //////////////////////////////////////////////////////////////////////////////
@@ -74,15 +73,6 @@ static icm20689_config_t icm20689_config_ =
      .gyro_fullscale = sl_gyroFullscale1000Dps,
      .on_data_rdy = &icm20689_data_rdy_cb_
 };
-
-/** Context of last sent keyboard key */
-static struct
-{
-    uint32_t send_time_ms;
-    uint16_t key_reset_timeout_ms;
-    uint8_t previous_key;
-    bool reset_send_request;
-} bt_key_ctx_ = {0};
 
 /** Current active led color indication*/
 static const sl_led_t* p_active_led_ = NULL;
@@ -125,20 +115,6 @@ void neuton_har_app_dowork(void)
     /** Handle LED indication */
     led_indication_();
 
-    /** Check if there is a need to send RESET_KEY to release keyboard */
-    if (bt_key_ctx_.reset_send_request)
-    {
-        uint64_t timestamp_ms = SLEEPTIMER_TICK_TO_MS(
-            sl_sleeptimer_get_tick_count64());
-
-        if ((timestamp_ms - bt_key_ctx_.send_time_ms) > bt_key_ctx_.key_reset_timeout_ms)
-        {
-            bt_key_ctx_.reset_send_request = false;
-            bt_key_ctx_.previous_key = 0;
-            sl_bt_reset_report();
-        }
-    }
-
     /** Check if the new sensor data samples is ready to read */
     if (!icm20689_data_ready_)
         return;
@@ -171,7 +147,7 @@ void neuton_har_app_dowork(void)
         /** Handle Neuton inference results if the prediction was successful */
         if (targets_num > 0)
         {
-            neuton_result_postprocess(predicted_target, (float)(p_probabilities[predicted_target]) / 65535,
+            neuton_result_postprocess(predicted_target, DEQUANTIZE_PROBABILITY(p_probabilities[predicted_target]),
                                         neuton_prediction_subscriber_);
         }
     }
@@ -192,114 +168,13 @@ static void neuton_prediction_subscriber_(const neuton_class_label_t class_label
                                         const float probability,
                                         const char* class_name)
 {
-//     app_log("Predicted %s, with probability %0.3f\r", class_name, probability);
-     app_log("%d, %d", (int)class_label, (int)(probability * 100));
+   app_log("Predicted %s, with probability %0.3f\r", class_name, probability);
 
-//    if (class_label > NEUTON_LABEL_UNKNOWN)
-//    {
-//        static uint32_t last_prediction_time_ms_ = 0;
-//        uint32_t current_time_ms = SLEEPTIMER_TICK_TO_MS(sl_sleeptimer_get_tick_count64());
-//
-//        /** For classes NEUTON_LABEL_ROTATION_RIGHT & NEUTON_LABEL_ROTATION_LEFT there is no timeout,
-//         * since the movements must be repetitive in time
-//         */
-//        if ((class_label == NEUTON_LABEL_ROTATION_RIGHT) ||
-//            (class_label == NEUTON_LABEL_ROTATION_LEFT) ||
-//            (current_time_ms - last_prediction_time_ms_) > PREDICTION_TIMEOUT_MS)
-//        {
-//            last_prediction_time_ms_ = current_time_ms;
-//
-//            app_log_info("Predicted class: %s, with probability %0.3f\r", class_name, probability / 65535);
-//
-//            send_bt_keyboard_key_(class_label);
-//        }
-//    }
-}
+    static char send_buff[20] = {0};
+    memset(send_buff, 0, sizeof(send_buff));
 
-//////////////////////////////////////////////////////////////////////////////
-
-static void send_bt_keyboard_key_(const neuton_class_label_t class_label)
-{
-//  bt_key_ctx_.key_reset_timeout_ms = BLE_SEND_KEY_RESET_TIMEOUT_MS;
-//
-//  if (keyboard_ctrl_mode_ == NEUTON_REMOTECTRL_MODE_PRESENTATION)
-//  {
-//      switch (class_label)
-//      {
-//      case NEUTON_LABEL_SWIPE_LEFT:
-//          current_report_page = REPORT_PAGE_KEYBOARD;
-//          current_key = KEY_ARROW_LEFT;
-//          break;
-//      case NEUTON_LABEL_SWIPE_RIGHT:
-//          current_report_page = REPORT_PAGE_KEYBOARD;
-//          current_key = KEY_ARROW_RIGHT;
-//          break;
-//      case NEUTON_LABEL_DOUBLE_TAP:
-//          current_report_page = REPORT_PAGE_KEYBOARD;
-//          current_key = KEY_F5;
-//          break;
-//      case NEUTON_LABEL_DOUBLE_THUMB:
-//          current_report_page = REPORT_PAGE_KEYBOARD;
-//          current_key = KEY_ESC;
-//          break;
-//      default:
-//          return;
-//      }
-//  }
-//  else // keyboard_ctrl_mode_ == NEUTON_REMOTECTRL_MODE_MUSIC
-//  {
-//      switch(class_label)
-//      {
-//        case NEUTON_LABEL_SWIPE_LEFT:
-//          current_report_page = REPORT_PAGE_MEDIA;
-//          current_key = KEY_MEDIA_PREV_TRACK;
-//          break;
-//        case NEUTON_LABEL_SWIPE_RIGHT:
-//          current_report_page = REPORT_PAGE_MEDIA;
-//          current_key = KEY_MEDIA_NEXT_TRACK;
-//          break;
-//        case NEUTON_LABEL_DOUBLE_TAP:
-//          current_report_page = REPORT_PAGE_MEDIA;
-//          current_key = KEY_MEDIA_PLAYPAUSE;
-//          break;
-//        case NEUTON_LABEL_DOUBLE_THUMB:
-//          current_report_page = REPORT_PAGE_MEDIA;
-//          current_key = KEY_MEDIA_MUTE;
-//          break;
-//        case NEUTON_LABEL_ROTATION_LEFT:
-//          if (bt_key_ctx_.previous_key == KEY_MEDIA_VOLUMEDOWN)
-//            bt_key_ctx_.key_reset_timeout_ms = BLE_AFTER_HOLD_KEY_RESET_TIMEOUT_MS;
-//          else
-//            bt_key_ctx_.key_reset_timeout_ms = BLE_HOLD_KEY_RESET_TIMEOUT_MS;
-//
-//          current_report_page = REPORT_PAGE_MEDIA;
-//          current_key = KEY_MEDIA_VOLUMEDOWN;
-//          break;
-//        case NEUTON_LABEL_ROTATION_RIGHT:
-//          if (bt_key_ctx_.previous_key  == KEY_MEDIA_VOLUMEUP)
-//            bt_key_ctx_.key_reset_timeout_ms = BLE_AFTER_HOLD_KEY_RESET_TIMEOUT_MS;
-//          else
-//            bt_key_ctx_.key_reset_timeout_ms = BLE_HOLD_KEY_RESET_TIMEOUT_MS;
-//
-//          current_report_page = REPORT_PAGE_MEDIA;
-//          current_key = KEY_MEDIA_VOLUMEUP;
-//          break;
-//        default:
-//          return;
-//      }
-//    }
-//
-//    /** Check if the reset key was sent after the previous key */
-//    if (bt_key_ctx_.reset_send_request == false)
-//    {
-//        /** Request the Bluetooth stack to send keyboard key */
-//        sl_bt_external_signal(1);
-//    }
-//
-//    /** Request RESET key to release keyboard */
-//    bt_key_ctx_.send_time_ms = SLEEPTIMER_TICK_TO_MS(sl_sleeptimer_get_tick_count64());
-//    bt_key_ctx_.reset_send_request = true;
-//    bt_key_ctx_.previous_key = current_key;
+    snprintf(send_buff, sizeof(send_buff), "%d, %d", (int)class_label, (int)(probability * 100));
+    sl_bt_send_data_str(send_buff);
 }
 
 //////////////////////////////////////////////////////////////////////////////
