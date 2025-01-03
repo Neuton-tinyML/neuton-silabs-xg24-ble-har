@@ -28,7 +28,7 @@ This project demonstrates a Neuton.AI model for Human Activity Recognition using
 
 ## Model specifications <div id='model-spec'/>
 
-The Neuton.AI Gesture Recognition solution memory footprint:
+The Neuton.AI Human Activity Recognition solution memory footprint:
 
 __Version 1.1.2__
 |                       |    FLASH       |   SRAM      |
