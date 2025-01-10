@@ -90,7 +90,7 @@ To set this project up, you will need to install the following software:
 
 # Python demo setup <div id='setup-py-demo'/>
 
-To install and run the UI demo you should have installed:
+To install and run the [UI demo](demo/README.md) you should have installed:
 
 + Python 3 and add python3 to your system PATH
 + Pip3 (Python should install it automatically, you can check it with `pip3 --version`)
@@ -114,7 +114,7 @@ Parity:         none
 Stop bits:      1-bit
 Flow control:   none
 ```
-Once the device is up and running, Bluetooth advertising starts as a HID device and waits for connection request from the PC. In the device logs you should see similar messages:
+Once the device is up and running, Bluetooth advertising starts and waits for connection request from the PC. In the device logs you should see similar messages:
 
 ```
 [I] Bluetooth stack booted: v5.1.0-b144
@@ -124,4 +124,20 @@ Once the device is up and running, Bluetooth advertising starts as a HID device 
 [I] Started advertising
 ```
 
-`TODO describe how demo works`
+After running the [demo](demo/uiapp_ble.py) you should see the following UI:
+
+![demo_screen_2](resources/demo_2.png)
+
+When device is **connected** it will send live model inference results to the PC via bluetooth:
+
+![demo_screen_3](resources/demo_3.png)
+
+The “Activity image” will change in the view depending on the model predictions:
+
+![demo_screen_4](resources/demo_4.png)
+
+In the serial port terminal you can also see model live predictions:
+
+![demo_screen_5](resources/demo_5.png)
+
+Enjoy exploring the project!
