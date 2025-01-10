@@ -1,7 +1,6 @@
 # Neuton.AI xG24 Human Activity Recognition Demo
 
 - [Overview](#overview)
-- [Demo video](#demo-video)
 - [Model specifications](#model-spec)
 - [Hardware overview](#hw-overview)
 - [Setup software environment](#setup-sw-env)
