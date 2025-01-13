@@ -13,14 +13,18 @@
 
 This project demonstrates a Neuton.AI model for Human Activity Recognition using [__Silabs xG24 Dev Kit__](https://www.silabs.com/development-tools/wireless/efr32xg24-dev-kit?tab=overview). The xG24 development kit could be connected to the PC via Bluetooth and using custom BLE characteristic send regonized activities to the PC where they will be rendered using a python script. Based on accelerometer and gyroscope data the Neuton.AI model could recognize __8 classes__ of activities: Hand washing; Brushing Hair; Wiping a table; Hand Waving; Using screwdriver; Clapping; No movements; Unknown activity.
 
+## Device orientation
+
+Place the device on left hand with usb-slot & cable facing outwards from hand as shown in the example below. Make sure to adjust the strap tightly to eliminate unnecessary device movement.
+
 
 `#TODO Show device orientation on hand and describe how to perform movements`
 
 |                                       |                                        |                                               |
 | ------------------------------------- | -------------------------------------- | --------------------------------------------- |
-| ![Alt Text](resources/hand_washing.gif) | ![Alt Text](resources/brushing_hair.gif) | ![Alt Text](resources/wiping.gif) |
+| ![Alt Text](assets/gif/washing_hands.gif) | ![Alt Text](assets/gif/brushing_hair.gif) | ![Alt Text](assets/gif/wiping_table.gif) |
 | Hand washing                          |  Brushing Hair                         |    Wiping a table                        |
-|![Alt Text](resources/hand_waving.gif)| ![Alt Text](resources/using_screwdriver.gif)  | ![Alt Text](resources/clapping.gif) |
+|![Alt Text](assets/gif/waving.gif)| ![Alt Text](assets/gif/screwdriver.gif)  | ![Alt Text](assets/gif/clapping.gif) |
 | Hand Waving                           | Using screwdriver                      |      Clapping               |
 
 

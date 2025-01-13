@@ -56,3 +56,4 @@ obj/
 GNU ARM v10.3.1 - Default/
 
 *.DS_Store
+/data-collection-videos
