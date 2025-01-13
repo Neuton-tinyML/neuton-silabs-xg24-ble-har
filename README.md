@@ -17,15 +17,14 @@ This project demonstrates a Neuton.AI model for Human Activity Recognition using
 
 Place the device on left hand with usb-slot & cable facing outwards from hand as shown in the example below. Make sure to adjust the strap tightly to eliminate unnecessary device movement.
 
-
-`#TODO Show device orientation on hand and describe how to perform movements`
+## Gestures model recognizes
 
 |                                       |                                        |                                               |
 | ------------------------------------- | -------------------------------------- | --------------------------------------------- |
 | ![Alt Text](assets/gif/washing_hands.gif) | ![Alt Text](assets/gif/brushing_hair.gif) | ![Alt Text](assets/gif/wiping_table.gif) |
-| Hand washing                          |  Brushing Hair                         |    Wiping a table                        |
+| Washing hands                         |  Brushing Hair                         |    Wiping a table                        |
 |![Alt Text](assets/gif/waving.gif)| ![Alt Text](assets/gif/screwdriver.gif)  | ![Alt Text](assets/gif/clapping.gif) |
-| Hand Waving                           | Using screwdriver                      |      Clapping               |
+| Waving hand                           | Using screwdriver                      |      Clapping               |
 
 
 
